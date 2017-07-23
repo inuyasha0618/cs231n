@@ -30,7 +30,23 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  for i in xrange(X.shape[0]):
+    maxF = np.dot(X[0], W[:, 0])
+    f = np.zeros(W.shape[1])
+
+    for j in xrange(W.shape[1]):
+      f[j] = np.dot(X[i], W[:, j])
+      if (f[j] > maxF):
+        maxF = f[j]
+
+    f -= maxF
+    sumExp = np.sum(np.exp(f))
+    loss += -f[y[i]] + np.log(sumExp)
+    dW[:, y[i]] += -X[i]
+    dW += 1 / sumExp * np.dot(X[i].reshape(X[i].shape[0], 1), np.exp(f).reshape(1, f.shape[0]))
+
+  loss = loss / X.shape[0] + reg * np.sum(W * W)
+  dW = dW / X.shape[0] + reg * 2 * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +70,18 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  N = X.shape[0]
+  f = np.dot(X, W)
+  expF = np.exp(f - f[np.arange(N), y][:, np.newaxis])
+  sumExp = np.sum(expF, axis=1)[:, np.newaxis]
+  probs = expF / sumExp
+  probsArr = probs[np.arange(N), y]
+  loss = np.sum(-np.log(probsArr)) / N + reg * np.sum(W * W)
+
+  temp = np.zeros_like(f)
+  temp[np.arange(N), y] = 1
+  dW = -np.dot(X.T, temp) / N + np.dot((X / sumExp).T, expF) / N + 2 * reg * W
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
