@@ -72,7 +72,8 @@ def softmax_loss_vectorized(W, X, y, reg):
   #############################################################################
   N = X.shape[0]
   f = np.dot(X, W)
-  expF = np.exp(f - f[np.arange(N), y][:, np.newaxis])
+  # expF = np.exp(f - f[np.arange(N), y][:, np.newaxis])
+  expF = np.exp(f - f[np.arange(N), np.argmax(f, axis=1)][:, np.newaxis])
   sumExp = np.sum(expF, axis=1)[:, np.newaxis]
   probs = expF / sumExp
   probsArr = probs[np.arange(N), y]
