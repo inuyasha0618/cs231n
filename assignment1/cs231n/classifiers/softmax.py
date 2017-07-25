@@ -45,8 +45,10 @@ def softmax_loss_naive(W, X, y, reg):
     dW[:, y[i]] += -X[i]
     dW += 1 / sumExp * np.dot(X[i].reshape(X[i].shape[0], 1), np.exp(f).reshape(1, f.shape[0]))
 
-  loss = loss / X.shape[0] + reg * np.sum(W * W)
-  dW = dW / X.shape[0] + reg * 2 * W
+  loss = loss / X.shape[0] + reg * np.sum(W[0:-1, :] * W[0:-1, :])
+  tmp = np.copy(W)
+  tmp[-1] = 0
+  dW = dW / X.shape[0] + reg * 2 * tmp
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -77,11 +79,13 @@ def softmax_loss_vectorized(W, X, y, reg):
   sumExp = np.sum(expF, axis=1)[:, np.newaxis]
   probs = expF / sumExp
   probsArr = probs[np.arange(N), y]
-  loss = np.sum(-np.log(probsArr)) / N + reg * np.sum(W * W)
+  loss = np.sum(-np.log(probsArr)) / N + reg * np.sum(W[0:-1, :] * W[0:-1, :])
 
   temp = np.zeros_like(f)
   temp[np.arange(N), y] = 1
-  dW = -np.dot(X.T, temp) / N + np.dot((X / sumExp).T, expF) / N + 2 * reg * W
+  Wcopy = np.copy(W)
+  Wcopy[-1] = 0
+  dW = -np.dot(X.T, temp) / N + np.dot((X / sumExp).T, expF) / N + 2 * reg * Wcopy
 
   #############################################################################
   #                          END OF YOUR CODE                                 #

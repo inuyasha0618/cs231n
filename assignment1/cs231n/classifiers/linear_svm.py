@@ -42,10 +42,12 @@ def svm_loss_naive(W, X, y, reg):
   # Right now the loss is a sum over all training examples, but we want it
   # to be an average instead so we divide by num_train.
   loss /= num_train
-  dW = dW / num_train + reg * 2 * W
+  Wcopy = np.copy(W)
+  Wcopy[-1] = 0
+  dW = dW / num_train + reg * 2 * Wcopy
 
   # Add regularization to the loss.
-  loss += reg * np.sum(W * W)
+  loss += reg * np.sum(W[0:-1] * W[0:-1])
 
   #############################################################################
   # TODO:                                                                     #
@@ -79,7 +81,7 @@ def svm_loss_vectorized(W, X, y, reg):
   MARGIN = SCORES - trueClassScores[:, np.newaxis] + 1
   MARGIN[MARGIN <= 0] = 0
   MARGIN[np.arange(MARGIN.shape[0]), y] = 0
-  loss = np.sum(MARGIN) / X.shape[0]
+  loss = np.sum(MARGIN) / X.shape[0] + reg * np.sum(W[0:-1] * W[0:-1])
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -96,7 +98,9 @@ def svm_loss_vectorized(W, X, y, reg):
   #############################################################################
   MARGIN[MARGIN > 0] = 1
   MARGIN[np.arange(MARGIN.shape[0]), y] = -np.sum(MARGIN, axis=1)
-  dW = np.dot(X.T, MARGIN) / X.shape[0]
+  Wcopy = np.copy(W)
+  Wcopy[-1] = 0
+  dW = np.dot(X.T, MARGIN) / X.shape[0] + reg * 2 * Wcopy
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
