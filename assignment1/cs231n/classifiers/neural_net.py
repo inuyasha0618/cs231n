@@ -171,7 +171,7 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      indexes = np.random.choice(N, batch_size)
+      indexes = np.random.choice(num_train, batch_size)
 
       X_batch = X[indexes]
       y_batch = y[indexes]
@@ -237,7 +237,7 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    y_pred = np.argmax(self.loss(X), axis=1)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
