@@ -134,6 +134,24 @@ class TwoLayerNet(object):
 
     return loss, grads
 
+  def eval_numerical_gradient(self, X, y, reg, param_name, h=0.00001):
+    W = self.params[param_name]
+    grad = np.zeros_like(W)
+    it = np.nditer(W, flags=['multi_index'], op_flags=['readwrite'])
+
+    while not it.finished:
+      current_index = it.multi_index
+      oldVal = W[current_index]
+      W[current_index] = oldVal - h
+      lossMh = self.loss(X, y, reg)[0]
+      W[current_index] = oldVal + h
+      lossPh = self.loss(X, y, reg)[0]
+      W[current_index] = oldVal
+      grad[current_index] = (lossPh - lossMh) / (2 * h)
+      it.iternext()
+
+    return grad
+
   def train(self, X, y, X_val, y_val,
             learning_rate=1e-3, learning_rate_decay=0.95,
             reg=5e-6, num_iters=100,
