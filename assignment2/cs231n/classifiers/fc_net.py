@@ -81,7 +81,7 @@ class TwoLayerNet(object):
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
         hiddenOut, hiddenCache = affine_relu_forward(X, self.params['W1'], self.params['b1'])
-        scores, outCache = affine_relu_forward(hiddenOut, self.params['W2'], self.params['b2'])
+        scores, outCache = affine_forward(hiddenOut, self.params['W2'], self.params['b2'])
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -105,7 +105,7 @@ class TwoLayerNet(object):
         softLoss, dscores = softmax_loss(scores, y)
         loss = softLoss + 0.5 * self.reg * (np.sum(self.params['W1'] * self.params['W1']) + np.sum(self.params['W2'] * self.params['W2']))
 
-        dout1, grads['W2'], grads['b2'] = affine_relu_backward(dscores, outCache)
+        dout1, grads['W2'], grads['b2'] = affine_backward(dscores, outCache)
         dx, grads['W1'], grads['b1'] = affine_relu_backward(dout1, hiddenCache)
 
         grads['W1'] += self.reg * self.params['W1']
@@ -250,7 +250,11 @@ class FullyConnectedNet(object):
                 curr_input = X
             else:
                 curr_input = out_arr[layer - 1]
-            out, cache = affine_relu_forward(curr_input, self.params['W' + str(layer + 1)], self.params['b' + str(layer + 1)])
+
+            if layer != self.num_layers - 1:
+                out, cache = affine_relu_forward(curr_input, self.params['W' + str(layer + 1)], self.params['b' + str(layer + 1)])
+            else:
+                out, cache = affine_forward(curr_input, self.params['W' + str(layer + 1)], self.params['b' + str(layer + 1)])
             out_arr.append(out)
             cache_arr.append(cache)
 
@@ -282,7 +286,10 @@ class FullyConnectedNet(object):
             curr_index = self.num_layers - layer - 1
             curr_W = self.params['W' + str(curr_index + 1)]
             loss += 0.5 * self.reg * np.sum(curr_W * curr_W)
-            dout, grads['W' + str(curr_index + 1)], grads['b' + str(curr_index + 1)] = affine_relu_backward(dout, cache_arr[curr_index])
+            if layer == 0:
+                dout, grads['W' + str(curr_index + 1)], grads['b' + str(curr_index + 1)] = affine_backward(dout, cache_arr[curr_index])
+            else:
+                dout, grads['W' + str(curr_index + 1)], grads['b' + str(curr_index + 1)] = affine_relu_backward(dout, cache_arr[curr_index])
             grads['W' + str(curr_index + 1)] += self.reg * curr_W
         ############################################################################
         #                             END OF YOUR CODE                             #

@@ -182,6 +182,8 @@ class Solver(object):
         loss, grads = self.model.loss(X_batch, y_batch)
         self.loss_history.append(loss)
 
+        # print(self.update_rule)
+
         # Perform a parameter update
         for p, w in self.model.params.items():
             dw = grads[p]
@@ -189,6 +191,9 @@ class Solver(object):
             next_w, next_config = self.update_rule(w, dw, config)
             self.model.params[p] = next_w
             self.optim_configs[p] = next_config
+
+            # if p == 'W1':
+            #     print('m: ', np.max(config['m']))
 
 
     def _save_checkpoint(self):
