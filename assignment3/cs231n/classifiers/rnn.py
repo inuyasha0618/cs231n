@@ -234,7 +234,6 @@ class CaptioningRNN(object):
 
 
         caption_input = np.ones(N, dtype=np.int32) * self._start
-        print(caption_input)
 
         for i in range(max_length):
             next_h, _ = rnn_step_forward(W_embed[caption_input], prev_h, Wx, Wh, b)
