@@ -139,13 +139,36 @@ class CaptioningRNN(object):
         ############################################################################
         h0 = np.dot(features, W_proj) + b_proj
 
-        word_vecs, _ = word_embedding_forward(captions_in, W_embed)
+        word_vecs, cache_embed = word_embedding_forward(captions_in, W_embed)
 
         h, cache_rnn = rnn_forward(word_vecs, h0, Wx, Wh, b)
 
         scores, cache_aff = temporal_affine_forward(h, W_vocab, b_vocab)
 
-        loss, _ = temporal_softmax_loss(scores, captions_out, mask, verbose=False)
+        loss, dscores = temporal_softmax_loss(scores, captions_out, mask, verbose=False)
+
+        #backward
+        dh, dW_vocab, db_vocab = temporal_affine_backward(dscores, cache_aff)
+
+        dword_vecs, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+
+        dW_embed = word_embedding_backward(dword_vecs, cache_embed)
+
+        dW_proj = np.dot(features.T, dh0)
+
+        db_proj = np.sum(dh0, axis=0)
+
+        grads['W_embed'] = dW_embed
+
+        grads['W_proj'] = dW_proj
+        grads['b_proj'] = db_proj
+
+        grads['Wx'] = dWx
+        grads['Wh'] = dWh
+        grads['b'] = db
+
+        grads['W_vocab'] = dW_vocab
+        grads['b_vocab'] = db_vocab
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -207,7 +230,19 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+        prev_h = np.dot(features, W_proj) + b
+
+
+        caption_input = np.ones(N, dtype=np.int32) * self._start
+        print(caption_input)
+
+        for i in range(max_length):
+            next_h, _ = rnn_step_forward(W_embed[caption_input], prev_h, Wx, Wh, b)
+            scores = np.dot(next_h, W_vocab) + b_vocab
+            caption_output = np.argmax(scores, axis=1)
+            captions[:, i] = caption_output
+            caption_input = caption_output
+            prev_h = next_h
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################

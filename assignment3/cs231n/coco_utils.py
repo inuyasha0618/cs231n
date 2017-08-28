@@ -83,5 +83,4 @@ def sample_coco_minibatch(data, batch_size=100, split='train'):
     image_idxs = data['%s_image_idxs' % split][mask]
     image_features = data['%s_features' % split][image_idxs]
     urls = data['%s_urls' % split][image_idxs]
-    print(image_idxs)
     return captions, image_features, urls
