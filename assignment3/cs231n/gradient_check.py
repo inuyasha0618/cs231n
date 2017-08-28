@@ -57,7 +57,6 @@ def eval_numerical_gradient_array(f, x, df, h=1e-5):
         it.iternext()
     return grad
 
-
 def eval_numerical_gradient_blobs(f, inputs, output, h=1e-5):
     """
     Compute numeric gradients for a function that operates on input
