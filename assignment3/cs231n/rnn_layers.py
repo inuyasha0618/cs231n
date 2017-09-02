@@ -323,7 +323,35 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     # TODO: Implement the forward pass for a single timestep of an LSTM.        #
     # You may want to use the numerically stable sigmoid implementation above.  #
     #############################################################################
-    pass
+    N, D = x.shape
+
+    H = prev_h.shape[1]
+
+    a = np.dot(x, Wx) + np.dot(prev_h, Wh) + b
+
+    ai = a[:, 0:H]
+
+    af = a[:, H:2*H]
+
+    ao = a[:, 2*H:3*H]
+
+    ag = a[:, 3*H:]
+
+    input_gate = sigmoid(ai)
+
+    forget_gate = sigmoid(af)
+
+    output_gate = sigmoid(ao)
+
+    block_input = np.tanh(ag)
+
+    next_c = forget_gate * prev_c + input_gate * block_input
+
+    squeezed_next_c = np.tanh(next_c)
+
+    next_h = output_gate * squeezed_next_c
+
+    cache = (N, H, x, prev_h, prev_c, Wx, Wh, squeezed_next_c, output_gate, forget_gate, input_gate, block_input)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -355,7 +383,52 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
     # the output value from the nonlinearity.                                   #
     #############################################################################
-    pass
+    N, H, x, prev_h, prev_c, Wx, Wh, squeezed_next_c, output_gate, forget_gate, input_gate, block_input = cache
+
+    da = np.zeros((N, 4 * H))
+
+    doutput_gate = dnext_h * squeezed_next_c
+
+    dsqueezed_next_c = dnext_h * output_gate
+
+    dnext_c2 = dsqueezed_next_c * (1 - squeezed_next_c ** 2)
+
+    dnext_c += dnext_c2
+
+    da[:, 2*H:3*H] = doutput_gate * (1 - output_gate) * output_gate
+
+    dforgetted_prev_c = dnext_c
+
+    dwill_add = dnext_c
+
+    dforget_gate = dforgetted_prev_c * prev_c
+
+    da[:, H:2*H] = dforget_gate * (1 - forget_gate) * forget_gate
+
+    dprev_c = dforgetted_prev_c * forget_gate
+
+    dblock_input = dwill_add * input_gate
+
+    dinput_gate = dwill_add * block_input
+
+    da[:, :H] = dinput_gate * (1 - input_gate) * input_gate
+
+    da[:, 3*H:] = dblock_input * (1 - block_input ** 2)
+
+    db = np.sum(da, axis=0)
+
+    dweighted_prevh = da
+
+    dweighted_x = da
+
+    dprev_h = dweighted_prevh.dot(Wh.T)
+
+    dWh = np.dot(prev_h.T, dweighted_prevh)
+
+    dx = dweighted_x.dot(Wx.T)
+
+    dWx = np.dot(x.T, dweighted_x)
+ 
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
