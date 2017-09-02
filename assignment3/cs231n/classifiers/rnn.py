@@ -141,7 +141,10 @@ class CaptioningRNN(object):
 
         word_vecs, cache_embed = word_embedding_forward(captions_in, W_embed)
 
-        h, cache_rnn = rnn_forward(word_vecs, h0, Wx, Wh, b)
+        if self.cell_type == 'rnn':
+            h, cache_rnn = rnn_forward(word_vecs, h0, Wx, Wh, b)
+        else:
+            h, cache_lstm = lstm_forward(word_vecs, h0, Wx, Wh, b)            
 
         scores, cache_aff = temporal_affine_forward(h, W_vocab, b_vocab)
 
@@ -150,7 +153,10 @@ class CaptioningRNN(object):
         #backward
         dh, dW_vocab, db_vocab = temporal_affine_backward(dscores, cache_aff)
 
-        dword_vecs, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        if self.cell_type == 'rnn':
+            dword_vecs, dh0, dWx, dWh, db = rnn_backward(dh, cache_rnn)
+        else:
+            dword_vecs, dh0, dWx, dWh, db = lstm_backward(dh, cache_lstm)
 
         dW_embed = word_embedding_backward(dword_vecs, cache_embed)
 
@@ -230,18 +236,26 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        prev_h = np.dot(features, W_proj) + b
 
+        prev_h = np.dot(features, W_proj) + b_proj
+
+        prev_c = np.zeros(prev_h.shape)
 
         caption_input = np.ones(N, dtype=np.int32) * self._start
 
         for i in range(max_length):
-            next_h, _ = rnn_step_forward(W_embed[caption_input], prev_h, Wx, Wh, b)
+            if self.cell_type == 'rnn':
+                next_h, _ = rnn_step_forward(W_embed[caption_input], prev_h, Wx, Wh, b)
+            else:
+                next_h, next_c, _ = lstm_step_forward(W_embed[caption_input], prev_h, prev_c, Wx, Wh, b)
             scores = np.dot(next_h, W_vocab) + b_vocab
             caption_output = np.argmax(scores, axis=1)
             captions[:, i] = caption_output
             caption_input = caption_output
             prev_h = next_h
+
+            if self.cell_type == 'lstm':
+                prev_c = next_c
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
