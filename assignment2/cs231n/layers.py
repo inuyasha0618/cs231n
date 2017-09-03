@@ -423,7 +423,32 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    stride = conv_param['stride']
+
+    pad = conv_param['pad']
+
+    N, C, H, W = x.shape
+
+    F, _, HH, WW = w.shape
+
+    H_out = 1 + (H + 2 * pad - HH) / stride
+
+    W_out = 1 + (W + 2 * pad - WW) / stride
+
+    out = np.zeros((N, F, H_out, W_out))
+
+    padded_x = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=0)
+
+    for n in range(N):
+        x_n = padded_x[n]
+
+        for f in range(F):
+            b_f = b[f]
+            for i in range(H_out):
+                for j in range(W_out):
+
+                    out[n, f, i, j] = np.sum(x_n[:, stride*i:stride*i + HH, stride*j:stride*j + WW] * w[f]) + b_f
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -448,7 +473,46 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+
+    N, C, H, W = x.shape
+
+    F, _, HH, WW = w.shape
+
+    dx = np.zeros_like(x)
+
+    dw = np.zeros_like(w)
+
+    db = np.zeros_like(b)
+
+    stride = conv_param['stride']
+
+    pad = conv_param['pad']
+
+    padded_x = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=0)
+
+    dpadded_x = np.pad(dx, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=0)
+
+    _, _, H_out, W_out = dout.shape
+
+    for n in range(N):
+
+        x_n = padded_x[n]
+
+        for f in range(F):
+
+            for i in range(H_out):
+
+                for j in range(W_out):
+
+                    db[f] += dout[n, f, i, j]
+
+                    dpadded_x[n, :, stride*i:stride*i + HH, stride*j:stride*j + WW] += dout[n, f, i, j] * w[f]
+
+                    dw[f] += dout[n, f, i, j] * x_n[:, stride*i:stride*i + HH, stride*j:stride*j + WW]
+
+    dx = dpadded_x[:, :, pad:H+pad, pad:W+pad]
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
