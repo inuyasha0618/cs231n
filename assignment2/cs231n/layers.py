@@ -538,7 +538,25 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+
+    pool_height = pool_param['pool_height']
+
+    pool_width = pool_param['pool_width']
+
+    stride = pool_param['stride']
+
+    out_width = (W - pool_width) / stride + 1
+
+    out_height = (W - pool_height) / stride + 1
+
+    out = np.zeros((N, C, out_height, out_width))
+
+    for n in range(N):
+        for c in range(C):
+            for i in range(out_height):
+                for j in range(out_width):
+                    out[n, c, i, j] = np.max(x[n, c, i*stride:i*stride + pool_height, j*stride:j*stride + pool_width])
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -561,7 +579,31 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    x, pool_param = cache
+
+    N, C, H, W = x.shape
+
+    pool_height = pool_param['pool_height']
+
+    pool_width = pool_param['pool_width']
+
+    stride = pool_param['stride']
+
+    out_width = (W - pool_width) / stride + 1
+
+    out_height = (W - pool_height) / stride + 1
+
+    dx = np.zeros_like(x)
+
+    for n in range(N):
+        for c in range(C):
+            for i in range(out_height):
+                for j in range(out_width):
+                    curr_window = x[n, c, i*stride:i*stride + pool_height, j*stride:j*stride + pool_width]
+                    mask = curr_window == np.max(curr_window)
+                    dx[n, c, i*stride:i*stride + pool_height, j*stride:j*stride + pool_width] += dout[n, c, i, j] * mask
+
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
